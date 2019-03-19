@@ -1,0 +1,63 @@
+---
+title: "5241Hw2"
+author: "Yiyang Fu || UNI:yf2473"
+date: "2/17/2019"
+output: html_document
+---
+
+#Introduction
+
+###In Problem 2, to see the direction of principal components more clearly and more convinient to analyse, I used some tricks to hide all the dates corresponding to each stocks in the background of biplot. And I adjusted the plane size to enhance the position of the plot. Also, to quantitatively clarify the components in the scree plot, I used the fviz_eig() function in "factoextra" package. It helps me understand the importance of the components directly.
+
+#Problem 2
+
+###1. For each of the 30 stocks in the Dow Jones Industrial Average(see day from January 1, 2018 to January 1, 2019). To download the prices, for example for symbol AAPL, we use the R package quantmod. The code is as the following. Please find a way to download data for the 30 stocks efficiently.
+
+```{r, "getSymbols.yahoo.warning"=FALSE}
+library(quantmod)
+data <- getSymbols("AAPL", auto.assign = FALSE, from = "2018-01-01", to = "2019-01-01")
+```
+
+
+```{r, warning=FALSE, echo=FALSE}
+DowJones30_symbols <- c("MMM","AXP","AAPL","BA","CAT","CVX","CSCO","KO","DWDP","XOM","GS","HD","IBM","INTC","JNJ","JPM","MCD","MRK","MSFT","NKE","PFE","PG","TRV","UNH","UTX","VZ","V","WMT","WBA","DIS")
+getSymbols(DowJones30_symbols, auto.assign = TRUE, from = "2018-01-01", to = "2019-01-01")
+DowJones30 <- data.frame(merge(MMM,AXP,AAPL,BA,CAT,CVX,CSCO,KO,DWDP,XOM,GS,HD,IBM,INTC,JNJ,JPM,MCD,MRK,MSFT,NKE,PFE,PG,TRV,UNH,UTX,VZ,V,WMT,WBA,DIS))
+```
+
+###2. Perform a PCA on the closing prices and create the biplot (call function princomp() and use cor=FALSE). 
+Do you see any structure in the biplot, perhaps in terms of the types of stocks? How about the screeplot – how many important components seem to be in the data?
+```{r, echo=FALSE}
+x <- seq(4,178, by = 6)
+biplot(princomp(DowJones30[,x], cor = FALSE), expand = 2, cex = 0.6, xlim = c(-0.15,0.2), ylim = c(-0.05,0.16), col = (c("white", "red")))
+library(factoextra)
+fviz_eig(princomp(DowJones30[,x], cor = FALSE), ylim = c(0,50), addlabels = T)
+#screeplot(princomp(DowJones30[,x], cor = FALSE), type = "lines")
+```
+We can see from the biplot that there are approximately two directions of the components which are basically orthogonal distributed. Deeper into the types of stocks, we can see that representatively, the AAPL and GS leading to the first two principal components. It means that in terms of stock types, the Information Technologies and Financial Service are most important components in industry field.
+About the screeplot, we can tell that in order to include over 90 percent information, about four important components are to be in the data.
+
+3. Repeat part 2 with cor=TRUE. This is equivalent to scale each column of the data matrix.
+```{r, echo=FALSE}
+biplot(princomp(DowJones30[,x], cor = TRUE), expand = 1.8, cex = 0.8, xlim = c(-0.3,0.25), ylim = c(-0.05,0.22), col = c("white", "red"))
+fviz_eig(princomp(DowJones30[,x], cor = TRUE), ylim = c(0,50), addlabels = T, type = "lines")
+```
+
+4. Use the closing prices to calculate the return for each stock, and repeat part 3 on the return data. In looking at the screeplot, what does this tell you about the 30 stocks in the DJIA? If each stock were fluctuating up and down randomly and independent of all the other stocks, what would you expect the screeplot to look like?
+```{r, echo=FALSE}
+DowJones30.close.price <- DowJones30[,x]
+DowJones30.return <- data.frame()
+for (i in 1:250) {
+  for (j in 1:30) {
+  DowJones30.return[i,j] <- (DowJones30.close.price[i+1,j]-DowJones30.close.price[i,j])/DowJones30.close.price[i,j]
+  }
+}
+names(DowJones30.return) <- DowJones30_symbols
+rownames(DowJones30.return) <- rownames(DowJones30.close.price)[2:251]
+biplot(princomp(DowJones30.return, cor = TRUE), expand = 2, cex = 0.8, col = c("white","red"), xlim = c(-0.1,0.6), ylim = c(-0.3,0.2))
+#screeplot(princomp(DowJones30.return[,], cor = TRUE), type = "lines")
+fviz_eig(princomp(DowJones30.return[,], cor = TRUE), ylim = c(0,50), addlabels = T, type = "lines")
+```
+From the screeplot of 30 stocks return data, we can see that apart from the first two components, which contribute 56.8% information in this data, most other stocks are also correlated in the environment of DJIA and can clarify certain components in returns. If each stock were fluctuating up and down randomly and independent of all the other stocks, the screeplot would show approximately a uniform distribution.
+
+
